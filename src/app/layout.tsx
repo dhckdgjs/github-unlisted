@@ -1,8 +1,8 @@
-import { Analytics } from "@vercel/analytics/next";
 import type { Metadata, Viewport } from "next";
 import { Geist_Mono } from "next/font/google";
 import localFont from "next/font/local";
 import { JsonLd } from "@/components/json-ld";
+import { PublicSiteAnalytics } from "@/components/public-site-analytics";
 import { SITE, siteGraphLd } from "@/lib/seo";
 
 // No CSS here on purpose: the root layout wraps EVERY route, and the viewer
@@ -73,7 +73,7 @@ export default function RootLayout({
 			<body>
 				{children}
 				<JsonLd data={siteGraphLd()} />
-				<Analytics />
+				<PublicSiteAnalytics />
 			</body>
 		</html>
 	);

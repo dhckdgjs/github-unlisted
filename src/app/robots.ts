@@ -8,7 +8,7 @@ export default function robots(): MetadataRoute.Robots {
 			allow: ["/", "/faq"],
 			// Dashboard, API, and any share link (carries ?s=) stay out of the
 			// index; the share viewer also emits per-page noindex.
-			disallow: ["/app", "/api/", "/*?s="],
+			disallow: ["/app", "/api/", "/collections/", "/*?s="],
 		},
 		sitemap: absoluteUrl("/sitemap.xml"),
 		host: absoluteUrl("/"),

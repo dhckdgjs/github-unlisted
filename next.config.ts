@@ -3,6 +3,18 @@ import { withBotId } from "botid/next/config";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+	async headers() {
+		const privateHeaders = [
+			{ key: "X-Robots-Tag", value: "noindex, nofollow, noarchive" },
+			{ key: "Referrer-Policy", value: "no-referrer" },
+			{ key: "Cache-Control", value: "private, no-store, max-age=0" },
+		];
+		return [
+			{ source: "/collections/:path*", headers: privateHeaders },
+			{ source: "/app/collections", headers: privateHeaders },
+			{ source: "/api/collections", headers: privateHeaders },
+		];
+	},
 	// octokit / @octokit/auth-app are ESM and server-only; don't bundle them.
 	serverExternalPackages: [
 		"octokit",

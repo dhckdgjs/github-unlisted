@@ -3,7 +3,13 @@
 // items stay identical across platforms. Order here is the render order:
 // Home first, Dashboard second (signed-in only), then the static pages.
 
-export type NavKey = "home" | "dashboard" | "faq" | "privacy" | "status";
+export type NavKey =
+	| "home"
+	| "dashboard"
+	| "collections"
+	| "faq"
+	| "privacy"
+	| "status";
 export type NavActive = NavKey | null;
 
 export interface NavItem {
@@ -19,6 +25,12 @@ export interface NavItem {
 export const NAV_ITEMS: NavItem[] = [
 	{ key: "home", label: "Home", href: "/" },
 	{ key: "dashboard", label: "Dashboard", href: "/app", signedInOnly: true },
+	{
+		key: "collections",
+		label: "공유 목록 관리",
+		href: "/app/collections",
+		signedInOnly: true,
+	},
 	{ key: "faq", label: "FAQ", href: "/faq" },
 	{ key: "privacy", label: "Privacy", href: "/privacy" },
 	{ key: "status", label: "Status", href: "/status", dot: true },

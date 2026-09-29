@@ -30,6 +30,8 @@ Done with it? Revoke the link in one click, or remove the repo's access in your 
 
 ## Features
 
+- **Unlisted collections (self-hosted fork).** Combine existing share links into one stable, unlisted page. Edit the title, descriptions, order and included repositories at `/app/collections` without redeploying. Actual collection data is stored only in Redis, not this public repository. See [the collection operator guide](docs/SHARED_COLLECTIONS.md).
+
 - **Multi configurations for privacy** Share a particular branch, default branch or show an option to your viewers to select from a dropdown of all available branches.
 - **Allow viewers to download or not** An option enables you to let users clone your repo (no commits or history, just files) from the branch you shared.
 - **Auto-revoke timer.** Optionally set a link to expire after a number of days, weeks, months, or years — or never.
