@@ -15,6 +15,7 @@ export type NavActive = NavKey | null;
 export interface NavItem {
 	key: NavKey;
 	label: string;
+	labelKo: string;
 	href: string;
 	// Only render when a session exists (the owner is signed in).
 	signedInOnly?: boolean;
@@ -23,15 +24,33 @@ export interface NavItem {
 }
 
 export const NAV_ITEMS: NavItem[] = [
-	{ key: "home", label: "Home", href: "/" },
-	{ key: "dashboard", label: "Dashboard", href: "/app", signedInOnly: true },
+	{ key: "home", label: "Home", labelKo: "홈", href: "/" },
+	{
+		key: "dashboard",
+		label: "Dashboard",
+		labelKo: "저장소 관리",
+		href: "/app",
+		signedInOnly: true,
+	},
 	{
 		key: "collections",
-		label: "공유 목록 관리",
+		label: "Collections",
+		labelKo: "공유 목록 관리",
 		href: "/app/collections",
 		signedInOnly: true,
 	},
-	{ key: "faq", label: "FAQ", href: "/faq" },
-	{ key: "privacy", label: "Privacy", href: "/privacy" },
-	{ key: "status", label: "Status", href: "/status", dot: true },
+	{ key: "faq", label: "FAQ", labelKo: "자주 묻는 질문", href: "/faq" },
+	{
+		key: "privacy",
+		label: "Privacy",
+		labelKo: "개인정보 안내",
+		href: "/privacy",
+	},
+	{
+		key: "status",
+		label: "Status",
+		labelKo: "서비스 상태",
+		href: "/status",
+		dot: true,
+	},
 ];

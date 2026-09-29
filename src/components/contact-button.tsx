@@ -2,23 +2,48 @@
 
 import { type FormEvent, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { useLocale } from "@/components/locale-provider";
 
 type SubjectKey = "problem" | "feature" | "other";
 type Status = "idle" | "sending" | "sent" | "error";
 
-const SUBJECTS: { value: SubjectKey; label: string }[] = [
-	{ value: "problem", label: "Reporting a problem" },
-	{ value: "feature", label: "Requesting a feature" },
-	{ value: "other", label: "Others" },
+const SUBJECTS: { value: SubjectKey; label: string; labelKo: string }[] = [
+	{ value: "problem", label: "Reporting a problem", labelKo: "문제 신고" },
+	{ value: "feature", label: "Requesting a feature", labelKo: "기능 요청" },
+	{ value: "other", label: "Others", labelKo: "기타" },
 ];
+
+// Keep the server response and submitted values intact; localize presentation only.
+const ERROR_KO: Record<string, string> = {
+	"Invalid request.": "올바르지 않은 요청입니다.",
+	"Please enter your name.": "이름을 입력해 주세요.",
+	"Please enter a valid email.": "올바른 이메일 주소를 입력해 주세요.",
+	"Please choose a subject.": "문의 유형을 선택해 주세요.",
+	"Please specify the subject.": "문의 제목을 입력해 주세요.",
+	"Please enter a message.": "문의 내용을 입력해 주세요.",
+	"Too many messages. Please try again later.":
+		"문의가 너무 많습니다. 잠시 후 다시 시도해 주세요.",
+	"Email is not configured.": "이메일 전송이 설정되어 있지 않습니다.",
+	"Could not send your message. Please try again.":
+		"문의를 전송하지 못했습니다. 다시 시도해 주세요.",
+	"Something went wrong. Please try again.":
+		"문제가 발생했습니다. 다시 시도해 주세요.",
+	"Something went wrong.": "문제가 발생했습니다.",
+	"Failed to fetch":
+		"서버에 연결하지 못했습니다. 네트워크 연결을 확인해 주세요.",
+	"Load failed": "서버에 연결하지 못했습니다. 네트워크 연결을 확인해 주세요.",
+	"NetworkError when attempting to fetch resource.":
+		"서버에 연결하지 못했습니다. 네트워크 연결을 확인해 주세요.",
+};
 
 export function ContactButton({
 	className = "nav-contact",
-	label = "Contact",
+	label,
 }: {
 	className?: string;
 	label?: string;
 }) {
+	const { t } = useLocale();
 	const [open, setOpen] = useState(false);
 	const [mounted, setMounted] = useState(false);
 	const [status, setStatus] = useState<Status>("idle");
@@ -91,7 +116,7 @@ export function ContactButton({
 			<button
 				type="button"
 				className="contact-backdrop"
-				aria-label="Close contact form"
+				aria-label={t("문의 폼 닫기", "Close contact form")}
 				onClick={() => setOpen(false)}
 			/>
 			<div
@@ -102,12 +127,12 @@ export function ContactButton({
 			>
 				<div className="contact-modal__head">
 					<h2 id="contact-title" className="contact-modal__title">
-						Contact
+						{t("문의하기", "Contact")}
 					</h2>
 					<button
 						type="button"
 						className="contact-modal__close"
-						aria-label="Close"
+						aria-label={t("닫기", "Close")}
 						onClick={() => setOpen(false)}
 					>
 						<svg
@@ -128,21 +153,23 @@ export function ContactButton({
 				{status === "sent" ? (
 					<div className="contact-sent">
 						<p>
-							Thanks, your message has been sent. I'll reply over email when I
-							can.
+							{t(
+								"문의가 전송되었습니다. 감사합니다. 가능한 때에 이메일로 답변드리겠습니다.",
+								"Thanks, your message has been sent. I'll reply over email when I can.",
+							)}
 						</p>
 						<button
 							type="button"
 							className="contact-submit"
 							onClick={() => setOpen(false)}
 						>
-							Close
+							{t("닫기", "Close")}
 						</button>
 					</div>
 				) : (
 					<form className="contact-form" onSubmit={onSubmit}>
 						<label className="contact-field">
-							<span className="contact-label">Name</span>
+							<span className="contact-label">{t("이름", "Name")}</span>
 							<input
 								className="contact-input"
 								name="name"
@@ -153,7 +180,7 @@ export function ContactButton({
 							/>
 						</label>
 						<label className="contact-field">
-							<span className="contact-label">Email</span>
+							<span className="contact-label">{t("이메일", "Email")}</span>
 							<input
 								className="contact-input"
 								name="email"
@@ -164,7 +191,7 @@ export function ContactButton({
 							/>
 						</label>
 						<label className="contact-field">
-							<span className="contact-label">Subject</span>
+							<span className="contact-label">{t("문의 유형", "Subject")}</span>
 							<select
 								className="contact-input contact-select"
 								name="subject"
@@ -173,14 +200,16 @@ export function ContactButton({
 							>
 								{SUBJECTS.map((s) => (
 									<option key={s.value} value={s.value}>
-										{s.label}
+										{t(s.labelKo, s.label)}
 									</option>
 								))}
 							</select>
 						</label>
 						{subject === "other" && (
 							<label className="contact-field">
-								<span className="contact-label">Specify subject</span>
+								<span className="contact-label">
+									{t("문의 제목", "Specify subject")}
+								</span>
 								<input
 									className="contact-input"
 									name="customSubject"
@@ -191,7 +220,7 @@ export function ContactButton({
 							</label>
 						)}
 						<label className="contact-field">
-							<span className="contact-label">Message</span>
+							<span className="contact-label">{t("문의 내용", "Message")}</span>
 							<textarea
 								className="contact-input contact-textarea"
 								name="message"
@@ -210,14 +239,18 @@ export function ContactButton({
 							aria-hidden="true"
 						/>
 						{status === "error" && error && (
-							<p className="contact-error">{error}</p>
+							<p className="contact-error">
+								{t(ERROR_KO[error] ?? error, error)}
+							</p>
 						)}
 						<button
 							type="submit"
 							className="contact-submit"
 							disabled={status === "sending"}
 						>
-							{status === "sending" ? "Sending…" : "Send"}
+							{status === "sending"
+								? t("전송 중…", "Sending…")
+								: t("전송", "Send")}
 						</button>
 					</form>
 				)}
@@ -228,7 +261,7 @@ export function ContactButton({
 	return (
 		<>
 			<button type="button" className={className} onClick={start}>
-				{label}
+				{label ?? t("문의하기", "Contact")}
 			</button>
 			{mounted && open && createPortal(modal, document.body)}
 		</>

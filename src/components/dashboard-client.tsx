@@ -2,9 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import * as React from "react";
+import { useClientLocalePage, useLocale } from "@/components/locale-provider";
 import { NavLinks } from "@/components/nav-links";
 import { SiteDrawer } from "@/components/site-drawer";
 import { SiteFooter } from "@/components/site-footer";
+import { intlLocale, type Locale } from "@/lib/i18n";
 
 interface Repo {
 	installationId: number;
@@ -29,6 +31,22 @@ type VisFilter = "all" | "private" | "public";
 type ShareFilter = "all" | "shared" | "unshared";
 
 type Unit = "days" | "weeks" | "months" | "years" | "never";
+type TranslatedMessage = [korean: string, english: string];
+
+const SHARE_ERRORS: Record<string, TranslatedMessage> = {
+	"Not signed in": ["로그인이 필요합니다", "Not signed in"],
+	"Invalid JSON": ["요청 형식이 올바르지 않습니다", "Invalid JSON"],
+	"Missing fields": ["필수 정보가 누락되었습니다", "Missing fields"],
+	"Missing id": ["공유 링크 ID가 없습니다", "Missing id"],
+	Forbidden: ["접근 권한이 없습니다", "Forbidden"],
+	"Repo not in this installation": [
+		"앱에 접근이 허용된 저장소가 아닙니다",
+		"Repo not in this installation",
+	],
+	"Invalid branch": ["브랜치 형식이 올바르지 않습니다", "Invalid branch"],
+	"Unknown branch": ["브랜치를 찾을 수 없습니다", "Unknown branch"],
+	"Not found": ["공유 링크를 찾을 수 없습니다", "Not found"],
+};
 
 // Months/years use fixed 30d/365d windows, close enough for a revoke timer.
 const UNIT_SECONDS: Record<Exclude<Unit, "never">, number> = {
@@ -48,34 +66,42 @@ function ttlFor(sel: TtlSel): number | null {
 	return Math.max(1, Math.floor(sel.amount)) * UNIT_SECONDS[sel.unit];
 }
 
-function until(ts: number): string {
+function until(ts: number, locale: Locale): string {
+	const relative = new Intl.RelativeTimeFormat(intlLocale(locale), {
+		numeric: "always",
+		style: "short",
+	});
 	const s = Math.floor((ts - Date.now()) / 1000);
-	if (s <= 0) return "soon";
+	if (s <= 0) return locale === "ko" ? "곧" : "soon";
 	const m = s / 60;
-	if (m < 60) return `in ${Math.ceil(m)}m`;
+	if (m < 60) return relative.format(Math.ceil(m), "minute");
 	const h = m / 60;
-	if (h < 24) return `in ${Math.ceil(h)}h`;
+	if (h < 24) return relative.format(Math.ceil(h), "hour");
 	const d = h / 24;
-	if (d < 14) return `in ${Math.ceil(d)}d`;
+	if (d < 14) return relative.format(Math.ceil(d), "day");
 	const w = d / 7;
-	if (w < 10) return `in ${Math.ceil(w)}w`;
+	if (w < 10) return relative.format(Math.ceil(w), "week");
 	const mo = d / 30;
-	if (mo < 24) return `in ${Math.ceil(mo)}mo`;
-	return `in ${Math.ceil(d / 365)}y`;
+	if (mo < 24) return relative.format(Math.ceil(mo), "month");
+	return relative.format(Math.ceil(d / 365), "year");
 }
 
-function ago(ts?: number): string {
+function ago(ts: number | undefined, locale: Locale): string {
 	if (!ts) return "";
+	const relative = new Intl.RelativeTimeFormat(intlLocale(locale), {
+		numeric: "always",
+		style: "short",
+	});
 	const s = Math.max(1, Math.floor((Date.now() - ts) / 1000));
-	if (s < 60) return "just now";
+	if (s < 60) return locale === "ko" ? "방금" : "just now";
 	const m = Math.floor(s / 60);
-	if (m < 60) return `${m}m ago`;
+	if (m < 60) return relative.format(-m, "minute");
 	const h = Math.floor(m / 60);
-	if (h < 24) return `${h}h ago`;
+	if (h < 24) return relative.format(-h, "hour");
 	const d = Math.floor(h / 24);
-	if (d < 7) return `${d}d ago`;
+	if (d < 7) return relative.format(-d, "day");
 	const w = Math.floor(d / 7);
-	return `${w}w ago`;
+	return relative.format(-w, "week");
 }
 
 // Segmented filter control styled like the nav pill bar: a bordered pill
@@ -124,6 +150,7 @@ function YesNo({
 	disabled?: boolean;
 	onChange: (v: boolean) => void;
 }) {
+	const { t } = useLocale();
 	return (
 		<div className="dash-ctl">
 			<span className="dash-ctl__label">
@@ -143,7 +170,7 @@ function YesNo({
 					disabled={disabled}
 					onClick={() => onChange(true)}
 				>
-					Yes
+					{t("예", "Yes")}
 				</button>
 				<button
 					type="button"
@@ -153,7 +180,7 @@ function YesNo({
 					disabled={disabled}
 					onClick={() => onChange(false)}
 				>
-					No
+					{t("아니요", "No")}
 				</button>
 			</div>
 		</div>
@@ -169,6 +196,8 @@ export function DashboardClient({
 	shares: Share[];
 	login: string;
 }) {
+	const { locale, t } = useLocale();
+	useClientLocalePage("저장소 관리", "Dashboard");
 	const router = useRouter();
 	const [query, setQuery] = React.useState("");
 	// Spec defaults: visibility starts on "private" (the repos people
@@ -178,7 +207,7 @@ export function DashboardClient({
 	const [selected, setSelected] = React.useState<string | null>(null);
 	const [busy, setBusy] = React.useState(false);
 	const [copied, setCopied] = React.useState(false);
-	const [error, setError] = React.useState<string | null>(null);
+	const [error, setError] = React.useState<TranslatedMessage | null>(null);
 	const [ttlSel, setTtlSel] = React.useState<Record<string, TtlSel>>({});
 	const [swSel, setSwSel] = React.useState<Record<string, boolean>>({});
 	const [dlSel, setDlSel] = React.useState<Record<string, boolean>>({});
@@ -225,11 +254,17 @@ export function DashboardClient({
 	const rel = relSel[key] ?? selShare?.showReleases ?? false;
 	const sw = swSel[key] ?? selShare?.showBranches ?? false;
 
-	const failure = async (res: Response, fallback: string) => {
+	const failure = async (res: Response, fallback: TranslatedMessage) => {
 		const data = (await res.json().catch(() => null)) as {
 			error?: string;
 		} | null;
-		setError(data?.error ?? fallback);
+		setError(
+			data?.error
+				? Object.hasOwn(SHARE_ERRORS, data.error)
+					? SHARE_ERRORS[data.error]
+					: [data.error, data.error]
+				: fallback,
+		);
 	};
 
 	const create = async (r: Repo) => {
@@ -251,12 +286,15 @@ export function DashboardClient({
 				}),
 			});
 			if (!res.ok) {
-				await failure(res, "Could not create the link");
+				await failure(res, [
+					"공유 링크를 만들지 못했습니다",
+					"Could not create the link",
+				]);
 				return;
 			}
 			router.refresh();
 		} catch {
-			setError("Could not create the link");
+			setError(["공유 링크를 만들지 못했습니다", "Could not create the link"]);
 		} finally {
 			setBusy(false);
 		}
@@ -283,19 +321,33 @@ export function DashboardClient({
 				}),
 			});
 			if (!res.ok) {
-				await failure(res, "Could not update the link");
+				await failure(res, [
+					"공유 링크를 변경하지 못했습니다",
+					"Could not update the link",
+				]);
 				return;
 			}
 			router.refresh();
 		} catch {
-			setError("Could not update the link");
+			setError([
+				"공유 링크를 변경하지 못했습니다",
+				"Could not update the link",
+			]);
 		} finally {
 			setBusy(false);
 		}
 	};
 
 	const revoke = async (s: Share) => {
-		if (!confirm(`Revoke the link to ${s.owner}/${s.repo}?`)) return;
+		if (
+			!confirm(
+				t(
+					`${s.owner}/${s.repo}의 공유 링크를 중지할까요?`,
+					`Revoke the link to ${s.owner}/${s.repo}?`,
+				),
+			)
+		)
+			return;
 		setBusy(true);
 		try {
 			const res = await fetch(`/api/share?id=${encodeURIComponent(s.id)}`, {
@@ -318,7 +370,11 @@ export function DashboardClient({
 	return (
 		<div className="page-shell">
 			<header className="topbar">
-				<a className="wordmark" href="/" aria-label="github unlisted home">
+				<a
+					className="wordmark"
+					href="/"
+					aria-label={t("github unlisted 홈", "github unlisted home")}
+				>
 					<span className="mark" aria-hidden="true">
 						<svg width="16" height="16" viewBox="0 0 16 16" fill="none">
 							<title>unlisted</title>
@@ -362,7 +418,7 @@ export function DashboardClient({
 				<NavLinks signedIn={true} active="dashboard" />
 
 				<a className="nav-cta" href="/api/github/logout">
-					Sign Out
+					{t("로그아웃", "Sign Out")}
 				</a>
 
 				<SiteDrawer signedIn={true} active="dashboard" />
@@ -371,30 +427,37 @@ export function DashboardClient({
 			<main className="dashboard">
 				{/* Row 1: welcome */}
 				<section className="dash-welcome">
-					<p className="dash-welcome__hi">Welcome,</p>
+					<p className="dash-welcome__hi">{t("안녕하세요,", "Welcome,")}</p>
 					<h1 className="dash-welcome__name">{login}</h1>
 				</section>
 
 				{/* Row 2: stats */}
-				<section className="dash-stats" aria-label="Your stats">
+				<section
+					className="dash-stats"
+					aria-label={t("내 저장소 현황", "Your stats")}
+				>
 					<div className="dash-stat">
-						<span className="dash-stat__label">Repositories</span>
+						<span className="dash-stat__label">
+							{t("저장소", "Repositories")}
+						</span>
 						<span className="dash-stat__value">{stats.total}</span>
 					</div>
 					<div className="dash-stat">
-						<span className="dash-stat__label">Public</span>
+						<span className="dash-stat__label">{t("공개", "Public")}</span>
 						<span className="dash-stat__value">{stats.pub}</span>
 					</div>
 					<div className="dash-stat">
-						<span className="dash-stat__label">Private</span>
+						<span className="dash-stat__label">{t("비공개", "Private")}</span>
 						<span className="dash-stat__value">{stats.priv}</span>
 					</div>
 					<div className="dash-stat">
-						<span className="dash-stat__label">Shared</span>
+						<span className="dash-stat__label">{t("공유 중", "Shared")}</span>
 						<span className="dash-stat__value">{stats.shared}</span>
 					</div>
 					<div className="dash-stat">
-						<span className="dash-stat__label">Shared/Private</span>
+						<span className="dash-stat__label">
+							{t("공유 중/비공개", "Shared/Private")}
+						</span>
 						<span className="dash-stat__value">
 							{stats.shared}/{stats.priv}
 						</span>
@@ -421,27 +484,28 @@ export function DashboardClient({
 						</span>
 						<input
 							type="search"
-							placeholder="Search repositories"
+							placeholder={t("저장소 검색", "Search repositories")}
+							aria-label={t("저장소 검색", "Search repositories")}
 							value={query}
 							onChange={(e) => setQuery(e.target.value)}
 						/>
 					</label>
 					<Seg
-						label="Filter by visibility"
+						label={t("공개 여부로 필터", "Filter by visibility")}
 						options={[
-							{ key: "all", label: "All" },
-							{ key: "private", label: "Private" },
-							{ key: "public", label: "Public" },
+							{ key: "all", label: t("전체", "All") },
+							{ key: "private", label: t("비공개", "Private") },
+							{ key: "public", label: t("공개", "Public") },
 						]}
 						value={visFilter}
 						onChange={setVisFilter}
 					/>
 					<Seg
-						label="Filter by share state"
+						label={t("공유 상태로 필터", "Filter by share state")}
 						options={[
-							{ key: "all", label: "All" },
-							{ key: "shared", label: "Shared" },
-							{ key: "unshared", label: "Unshared" },
+							{ key: "all", label: t("전체", "All") },
+							{ key: "shared", label: t("공유 중", "Shared") },
+							{ key: "unshared", label: t("공유 안 함", "Unshared") },
 						]}
 						value={shareFilter}
 						onChange={setShareFilter}
@@ -450,14 +514,19 @@ export function DashboardClient({
 
 				{error && (
 					<div className="signin-error" role="alert">
-						{error}
+						{t(...error)}
 					</div>
 				)}
 
 				{/* Row 4: selectable repo rows */}
-				<section className="dash-repos" aria-label="Repositories">
+				<section
+					className="dash-repos"
+					aria-label={t("저장소", "Repositories")}
+				>
 					{visible.length === 0 && (
-						<p className="dash-repos__empty">No repositories match.</p>
+						<p className="dash-repos__empty">
+							{t("조건에 맞는 저장소가 없습니다.", "No repositories match.")}
+						</p>
 					)}
 					{visible.map((r) => {
 						const share = shareByRepo.get(r.fullName.toLowerCase());
@@ -478,28 +547,43 @@ export function DashboardClient({
 									{share ? (
 										<span className="repo-card__meta">
 											{share.createdAt && (
-												<span>created {ago(share.createdAt)}</span>
+												<span>
+													{t(
+														`${ago(share.createdAt, locale)} 생성`,
+														`created ${ago(share.createdAt, locale)}`,
+													)}
+												</span>
 											)}
 											<span>
 												{share.expiresAt
-													? `revokes ${until(share.expiresAt)}`
-													: "no auto-revoke"}
+													? t(
+															`${until(share.expiresAt, locale)} 공유 중지`,
+															`revokes ${until(share.expiresAt, locale)}`,
+														)
+													: t("자동 중지 없음", "no auto-revoke")}
 											</span>
 											<span>
 												{share.ref
-													? `locked to ${share.ref}`
+													? t(
+															`${share.ref} 브랜치로 고정`,
+															`locked to ${share.ref}`,
+														)
 													: share.showBranches
-														? "branch list shown"
-														: "default branch"}
+														? t("브랜치 목록 표시", "branch list shown")
+														: t("기본 브랜치", "default branch")}
 											</span>
-											{share.allowDownload && <span>zip enabled</span>}
-											{share.showReleases && <span>releases shown</span>}
+											{share.allowDownload && (
+												<span>{t("ZIP 다운로드 허용", "zip enabled")}</span>
+											)}
+											{share.showReleases && (
+												<span>{t("릴리스 표시", "releases shown")}</span>
+											)}
 										</span>
 									) : (
-										<span>unshared</span>
+										<span>{t("공유 안 함", "unshared")}</span>
 									)}
 									<span className="repo-card__vis">
-										{r.private ? "private" : "public"}
+										{r.private ? t("비공개", "private") : t("공개", "public")}
 									</span>
 								</span>
 							</button>
@@ -508,46 +592,67 @@ export function DashboardClient({
 				</section>
 
 				{/* Final row: sticky control panel for the selected repo */}
-				<section className="dash-panel" aria-label="Share controls">
+				<section
+					className="dash-panel"
+					aria-label={t("공유 설정", "Share controls")}
+				>
 					{!selRepo ? (
 						<p className="dash-panel__hint">
-							Select a repository above to manage its share link.
+							{t(
+								"위에서 저장소를 선택해 공유 링크를 관리하세요.",
+								"Select a repository above to manage its share link.",
+							)}
 						</p>
 					) : (
 						<>
 							<p className="dash-panel__repo">
 								{selRepo.name}
 								<span className="sep">|</span>
-								<span>{selShare ? "shared" : "unshared"}</span>
+								<span>
+									{selShare
+										? t("공유 중", "shared")
+										: t("공유 안 함", "unshared")}
+								</span>
 							</p>
 							<div className="dash-panel__controls">
 								<YesNo
-									label="Viewers can download repo as a zip"
+									label={t(
+										"저장소 ZIP 다운로드 허용",
+										"Viewers can download repo as a zip",
+									)}
 									value={dl}
 									disabled={busy}
 									onChange={(v) => setDlSel((p) => ({ ...p, [key]: v }))}
 								/>
 								<YesNo
-									label="Show releases as well"
+									label={t("릴리스도 함께 표시", "Show releases as well")}
 									value={rel}
 									disabled={busy}
 									onChange={(v) => setRelSel((p) => ({ ...p, [key]: v }))}
 								/>
 								<YesNo
-									label="Let users see a list of branches"
-									hint="Whatever is selected, the link opens on the default branch, and viewers can always edit the URL to reach another branch. The list just makes it easier."
+									label={t(
+										"브랜치 목록 표시",
+										"Let users see a list of branches",
+									)}
+									hint={t(
+										"이 설정과 관계없이 링크는 기본 브랜치를 열며, 열람자는 URL을 수정해 다른 브랜치에 접근할 수 있습니다. 목록은 브랜치 이동을 돕는 기능입니다.",
+										"Whatever is selected, the link opens on the default branch, and viewers can always edit the URL to reach another branch. The list just makes it easier.",
+									)}
 									value={sw}
 									disabled={busy}
 									onChange={(v) => setSwSel((p) => ({ ...p, [key]: v }))}
 								/>
 								<div className="dash-ctl">
-									<span className="dash-ctl__label">Revoke shared link</span>
+									<span className="dash-ctl__label">
+										{t("공유 링크 자동 중지", "Revoke shared link")}
+									</span>
 									<span className="ttl">
 										<input
 											type="number"
 											min={1}
 											className="ttl__num"
-											aria-label="Auto-revoke amount"
+											aria-label={t("자동 중지 기간", "Auto-revoke amount")}
 											value={ttl.amount}
 											disabled={busy || ttl.unit === "never"}
 											onChange={(e) =>
@@ -565,7 +670,7 @@ export function DashboardClient({
 										/>
 										<select
 											className="ttl__unit"
-											aria-label="Auto-revoke unit"
+											aria-label={t("자동 중지 단위", "Auto-revoke unit")}
 											value={ttl.unit}
 											disabled={busy}
 											onChange={(e) =>
@@ -575,11 +680,13 @@ export function DashboardClient({
 												}))
 											}
 										>
-											<option value="days">days</option>
-											<option value="weeks">weeks</option>
-											<option value="months">months</option>
-											<option value="years">years</option>
-											<option value="never">never revoke</option>
+											<option value="days">{t("일", "days")}</option>
+											<option value="weeks">{t("주", "weeks")}</option>
+											<option value="months">{t("개월", "months")}</option>
+											<option value="years">{t("년", "years")}</option>
+											<option value="never">
+												{t("자동 중지 안 함", "never revoke")}
+											</option>
 										</select>
 									</span>
 								</div>
@@ -593,7 +700,9 @@ export function DashboardClient({
 											disabled={busy}
 											onClick={() => revoke(selShare)}
 										>
-											{busy ? "Working" : "Revoke"}
+											{busy
+												? t("처리 중", "Working")
+												: t("공유 중지", "Revoke")}
 										</button>
 										<button
 											type="button"
@@ -601,14 +710,16 @@ export function DashboardClient({
 											disabled={busy}
 											onClick={() => applySettings(selShare)}
 										>
-											Set
+											{t("적용", "Set")}
 										</button>
 										<button
 											type="button"
 											className="dash-btn"
 											onClick={() => copy(selShare)}
 										>
-											{copied ? "Copied" : "Copy Link"}
+											{copied
+												? t("복사됨", "Copied")
+												: t("링크 복사", "Copy Link")}
 										</button>
 										<a
 											className="dash-btn"
@@ -616,7 +727,7 @@ export function DashboardClient({
 											target="_blank"
 											rel="noopener"
 										>
-											Visit
+											{t("열기", "Visit")}
 										</a>
 									</>
 								) : (
@@ -626,7 +737,7 @@ export function DashboardClient({
 										disabled={busy}
 										onClick={() => create(selRepo)}
 									>
-										{busy ? "Creating" : "Share"}
+										{busy ? t("만드는 중", "Creating") : t("공유하기", "Share")}
 									</button>
 								)}
 							</div>

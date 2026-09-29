@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import * as React from "react";
+import { useLocale } from "@/components/locale-provider";
 import { buildHref } from "@/lib/repo-path";
 
 // Recipient-facing branch picker. Rendered only for a share that is not locked to a branch AND whose owner opted in, because enumerating branch names tells a recipient things the repository itself does not.
@@ -18,6 +19,7 @@ export function BranchSwitcher({
 	current: string;
 	shareId: string;
 }) {
+	const { t } = useLocale();
 	const router = useRouter();
 	const [pending, setPending] = React.useState(false);
 
@@ -28,10 +30,10 @@ export function BranchSwitcher({
 
 	return (
 		<label className="branchsw">
-			<span className="branchsw__label">Branch</span>
+			<span className="branchsw__label">{t("브랜치", "Branch")}</span>
 			<select
 				className="branchsw__sel"
-				aria-label="Branch"
+				aria-label={t("브랜치", "Branch")}
 				value={current}
 				disabled={pending}
 				onChange={(e) => {

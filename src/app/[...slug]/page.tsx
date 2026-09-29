@@ -1,15 +1,20 @@
 import "@/styles/viewer.css";
 import { ViewerContent } from "@/components/viewer-content";
+import { translator } from "@/lib/i18n";
+import { getLocale } from "@/lib/locale-server";
 import { pageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
 // Share links expose private repositories — never index them.
-export const metadata = pageMetadata({
-	title: "Shared repository",
-	path: "/",
-	index: false,
-});
+export async function generateMetadata() {
+	const t = translator(await getLocale());
+	return pageMetadata({
+		title: t("공유 저장소", "Shared repository"),
+		path: "/",
+		index: false,
+	});
+}
 
 // The viewer is now a shell: the repo data it renders is fetched client-side
 // from the BotID-protected /api/view endpoint. A cold document load (how share

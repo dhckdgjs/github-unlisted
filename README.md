@@ -30,6 +30,8 @@ Done with it? Revoke the link in one click, or remove the repo's access in your 
 
 ## Features
 
+- **Korean / English interface.** Switch languages at the top of any page. The site remembers your preference without changing share URLs or repository content. See [the localization guide](docs/LANGUAGES.md).
+
 - **Unlisted collections (self-hosted fork).** Combine existing share links into one stable, unlisted page. Edit the title, descriptions, order and included repositories at `/app/collections` without redeploying. Actual collection data is stored only in Redis, not this public repository. See [the collection operator guide](docs/SHARED_COLLECTIONS.md).
 
 - **Multi configurations for privacy** Share a particular branch, default branch or show an option to your viewers to select from a dropdown of all available branches.

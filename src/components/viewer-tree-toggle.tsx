@@ -1,8 +1,10 @@
 "use client";
 
 import * as React from "react";
+import { useLocale } from "@/components/locale-provider";
 
 export function ViewerTreeToggle() {
+	const { t } = useLocale();
 	const [open, setOpen] = React.useState(false);
 
 	React.useEffect(() => {
@@ -26,7 +28,11 @@ export function ViewerTreeToggle() {
 			<button
 				type="button"
 				className="viewer__tree-toggle"
-				aria-label={open ? "Hide file tree" : "Show file tree"}
+				aria-label={
+					open
+						? t("파일 목록 숨기기", "Hide file tree")
+						: t("파일 목록 보기", "Show file tree")
+				}
 				aria-expanded={open}
 				onClick={() => setOpen((v) => !v)}
 			>
@@ -43,12 +49,12 @@ export function ViewerTreeToggle() {
 					<line x1="3" y1="12" x2="21" y2="12" />
 					<line x1="3" y1="18" x2="21" y2="18" />
 				</svg>
-				Files
+				{t("파일", "Files")}
 			</button>
 			<button
 				type="button"
 				className="viewer__tree-backdrop"
-				aria-label="Close file tree"
+				aria-label={t("파일 목록 닫기", "Close file tree")}
 				tabIndex={open ? 0 : -1}
 				onClick={() => setOpen(false)}
 			/>

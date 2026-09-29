@@ -5,6 +5,8 @@ import { SiteDrawer } from "@/components/site-drawer";
 import { SiteFooter } from "@/components/site-footer";
 import shotDesktop from "@/images/1080p.png";
 import shotMobile from "@/images/mobile.png";
+import { translator } from "@/lib/i18n";
+import { getLocale } from "@/lib/locale-server";
 import { getSession } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
@@ -13,8 +15,7 @@ export const dynamic = "force-dynamic";
 // capture at 480px and below and the desktop capture above it, so only
 // the matching file is downloaded (two <Image>s hidden by CSS would
 // fetch both).
-function HeroShot() {
-	const alt = "Screenshot of the Github-Unlisted app";
+function HeroShot({ alt }: { alt: string }) {
 	const mobile = getImageProps({ alt, src: shotMobile });
 	const desktop = getImageProps({ alt, src: shotDesktop, priority: true });
 	return (
@@ -27,11 +28,16 @@ function HeroShot() {
 
 export default async function Page() {
 	const session = await getSession();
+	const t = translator(await getLocale());
 
 	return (
 		<div className="page-shell">
 			<header className="topbar">
-				<a className="wordmark" href="/" aria-label="github unlisted home">
+				<a
+					className="wordmark"
+					href="/"
+					aria-label={t("GitHub Unlisted 홈", "github unlisted home")}
+				>
 					<span className="mark" aria-hidden="true">
 						<svg width="16" height="16" viewBox="0 0 16 16" fill="none">
 							<title>unlisted</title>
@@ -76,11 +82,11 @@ export default async function Page() {
 
 				{session ? (
 					<a className="nav-cta" href="/api/github/logout">
-						Sign Out
+						{t("로그아웃", "Sign Out")}
 					</a>
 				) : (
 					<a className="nav-cta" href="/api/github/login">
-						Sign In
+						{t("로그인", "Sign In")}
 					</a>
 				)}
 
@@ -91,19 +97,30 @@ export default async function Page() {
 				<div className="hero__inner">
 					<h1 className="hero__title">Github Unlisted</h1>
 					<p className="hero__sub">
-						Share a private repo with a read-only link. No GitHub account needed
-						for the recipient. <br /> The service is free for
-						use and open source.
+						{t(
+							"비공개 저장소를 읽기 전용 링크로 공유하세요. 받는 사람은 GitHub 계정이 없어도 됩니다.",
+							"Share a private repo with a read-only link. No GitHub account needed for the recipient.",
+						)}
+						<br />
+						{t(
+							"누구나 무료로 사용할 수 있는 오픈 소스 서비스입니다.",
+							"The service is free for use and open source.",
+						)}
 					</p>
 				</div>
 
-				<HeroShot />
+				<HeroShot
+					alt={t(
+						"GitHub Unlisted 앱 화면",
+						"Screenshot of the Github-Unlisted app",
+					)}
+				/>
 
 				<div className="hero-cta">
 					<div className="hero-cta__row">
 						{session ? (
 							<a className="btn btn--outline-accent" href="/app">
-								Open your repositories
+								{t("내 저장소 열기", "Open your repositories")}
 							</a>
 						) : (
 							<a className="btn btn--outline-accent" href="/api/github/login">
@@ -116,7 +133,7 @@ export default async function Page() {
 								>
 									<path d="M12 .3a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2.1c-3.3.7-4-1.6-4-1.6-.5-1.4-1.3-1.8-1.3-1.8-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1.1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-6 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.6 1.7.2 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.7-5.5 6 .4.4.8 1.1.8 2.2v3.2c0 .3.2.7.8.6A12 12 0 0 0 12 .3" />
 								</svg>
-								Install on GitHub
+								{t("GitHub에 설치", "Install on GitHub")}
 							</a>
 						)}
 					</div>

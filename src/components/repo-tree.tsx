@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import * as React from "react";
+import { useLocale } from "@/components/locale-provider";
 import { buildHref } from "@/lib/repo-path";
 
 interface Item {
@@ -142,6 +143,7 @@ export function RepoTree({
 	shareId: string;
 	activePath: string;
 }) {
+	const { t } = useLocale();
 	const root = React.useMemo(() => buildTree(items), [items]);
 
 	const [expanded, setExpanded] = React.useState<Set<string>>(
@@ -239,7 +241,8 @@ export function RepoTree({
 					</span>
 					<input
 						type="search"
-						placeholder="Find a file"
+						placeholder={t("파일 검색", "Find a file")}
+						aria-label={t("파일 검색", "Find a file")}
 						value={q}
 						onChange={(e) => setQ(e.target.value)}
 					/>
@@ -248,7 +251,9 @@ export function RepoTree({
 			<div className="tree">
 				{matches ? (
 					matches.length === 0 ? (
-						<div className="tree__empty">No matches.</div>
+						<div className="tree__empty">
+							{t("검색 결과가 없습니다.", "No matches.")}
+						</div>
 					) : (
 						matches.map((it) => (
 							<div
@@ -273,7 +278,9 @@ export function RepoTree({
 						))
 					)
 				) : root.children.size === 0 ? (
-					<div className="tree__empty">No files here.</div>
+					<div className="tree__empty">
+						{t("파일이 없습니다.", "No files here.")}
+					</div>
 				) : (
 					renderNodes(sortedChildren(root), 0)
 				)}

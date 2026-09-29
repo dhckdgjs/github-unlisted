@@ -1,7 +1,10 @@
-// Shared site footer (every page). Two static links: the project source
-// and the author's site. Server-neutral so it can be used in both server
-// pages and the client dashboard. (Contact moved to the nav / drawer.)
+"use client";
+
+import { useLocale } from "@/components/locale-provider";
+
+// Shared site footer (every page), with the original source and author links.
 export function SiteFooter() {
+	const { t } = useLocale();
 	return (
 		<footer className="site-footer">
 			<a
@@ -9,7 +12,8 @@ export function SiteFooter() {
 				target="_blank"
 				rel="noopener"
 			>
-				MST self-hosted fork · <span className="url">Source Code</span>
+				{t("MST 자체 운영 포크", "MST self-hosted fork")} ·{" "}
+				<span className="url">{t("소스 코드", "Source Code")}</span>
 				<svg
 					width="11"
 					height="11"
@@ -26,7 +30,10 @@ export function SiteFooter() {
 				</svg>
 			</a>
 			<a href="https://www.revoconner.com" target="_blank" rel="noopener">
-				Based on github-unlisted by R&eacute;v
+				{t(
+					"Rév의 github-unlisted를 기반으로 제작",
+					"Based on github-unlisted by Rév",
+				)}
 				<svg
 					width="11"
 					height="11"

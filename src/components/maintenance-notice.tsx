@@ -1,8 +1,10 @@
 "use client";
 
 import * as React from "react";
+import { useLocale } from "@/components/locale-provider";
 
 export function MaintenanceNotice() {
+	const { t } = useLocale();
 	const [open, setOpen] = React.useState(true);
 
 	React.useEffect(() => {
@@ -26,14 +28,14 @@ export function MaintenanceNotice() {
 			<button
 				type="button"
 				className="maint-backdrop"
-				aria-label="Close notice"
+				aria-label={t("안내 닫기", "Close notice")}
 				onClick={() => setOpen(false)}
 			/>
 			<div className="maint-card">
 				<button
 					type="button"
 					className="maint-close"
-					aria-label="Close notice"
+					aria-label={t("안내 닫기", "Close notice")}
 					onClick={() => setOpen(false)}
 				>
 					<svg
@@ -52,11 +54,16 @@ export function MaintenanceNotice() {
 					</svg>
 				</button>
 				<p id="maint-title" className="maint-body">
-					We are currently doing maintenance work on the dashboard. While
-					unlikely, you may encounter problems in operations.
+					{t(
+						"현재 대시보드를 점검하고 있습니다. 가능성은 낮지만 이용 중 문제가 발생할 수 있습니다.",
+						"We are currently doing maintenance work on the dashboard. While unlikely, you may encounter problems in operations.",
+					)}
 				</p>
 				<p className="maint-eta">
-					We expect to be fully operational by 01:43 UTC, 26th.
+					{t(
+						"26일 01:43 UTC까지 정상 운영을 재개할 예정입니다.",
+						"We expect to be fully operational by 01:43 UTC, 26th.",
+					)}
 				</p>
 			</div>
 		</div>

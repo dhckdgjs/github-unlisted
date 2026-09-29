@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import * as React from "react";
 import { BranchSwitcher } from "@/components/branch-switcher";
+import { useClientLocalePage, useLocale } from "@/components/locale-provider";
 import { ReleasesList } from "@/components/releases-list";
 import { RepoTree } from "@/components/repo-tree";
 import { SidebarTree } from "@/components/sidebar-tree";
@@ -12,13 +13,43 @@ import { ViewerTreeToggle } from "@/components/viewer-tree-toggle";
 import { buildHref, buildReleasesHref } from "@/lib/repo-path";
 import type { ViewerPayload } from "@/lib/viewer-data";
 
+// Translate only the application's known notice text. Repository content and
+// unknown server messages remain verbatim; this never touches README or code.
+const NOTICE_KO: Record<string, string> = {
+	"Not found": "페이지를 찾을 수 없습니다",
+	"Bad request": "잘못된 요청입니다",
+	"A share link is required": "공유 링크가 필요합니다",
+	"Open a link created from the dashboard (it includes ?s=…).":
+		"대시보드에서 만든 공유 링크(?s=… 포함)를 열어 주세요.",
+	"Link invalid or expired": "유효하지 않거나 만료된 링크입니다",
+	"This share link no longer works. Ask the owner for a new one.":
+		"더 이상 사용할 수 없는 공유 링크입니다. 소유자에게 새 링크를 요청해 주세요.",
+	"This link does not match this repository":
+		"이 저장소에 해당하는 링크가 아닙니다",
+	"Access revoked": "접근 권한이 해제되었습니다",
+	"The app no longer has access to this repository.":
+		"앱이 더 이상 이 저장소에 접근할 수 없습니다.",
+	"Releases are not available for this link":
+		"이 링크에서는 릴리스를 볼 수 없습니다",
+	"The owner has not turned on the releases view for this share.":
+		"소유자가 이 공유 링크의 릴리스 보기를 허용하지 않았습니다.",
+	"Access blocked": "접근이 차단되었습니다",
+	"This shared repository is protected against automated access. If you're using a normal browser, reload the page and try again.":
+		"이 공유 저장소는 자동 접근을 차단하고 있습니다. 일반 브라우저를 사용 중이라면 페이지를 새로고침한 뒤 다시 시도해 주세요.",
+	"Something went wrong": "오류가 발생했습니다",
+	"This repository could not be loaded. Please try again.":
+		"저장소를 불러오지 못했습니다. 다시 시도해 주세요.",
+};
+
 function Notice({ title, detail }: { title: string; detail?: string }) {
+	const { t } = useLocale();
+	const translate = (value: string) => t(NOTICE_KO[value] ?? value, value);
 	return (
 		// viewer-shell so the notice resolves the viewer's --gh-* tokens.
 		<div className="viewer-shell notice-screen">
-			<h1>{title}</h1>
-			{detail && <p>{detail}</p>}
-			<Link href="/">Home</Link>
+			<h1>{translate(title)}</h1>
+			{detail && <p>{translate(detail)}</p>}
+			<Link href="/">{t("홈", "Home")}</Link>
 		</div>
 	);
 }
@@ -73,6 +104,7 @@ function ViewerShell({
 	refName: string;
 	children: ReactNode;
 }) {
+	const { t } = useLocale();
 	return (
 		// viewer-shell scopes the branch's GitHub-like tokens/theme to this
 		// surface only; page-shell (also viewer.css) supplies the flex layout.
@@ -81,15 +113,11 @@ function ViewerShell({
 			    as our chrome, not part of the shared repo's content. */}
 			<header className="topbar">
 				<span className="viewer-attrib">
-					Private repo shared using{" "}
-					<a
-						href="/"
-						target="_blank"
-						rel="noopener noreferrer"
-					>
+					{t("비공개 저장소 공유 ·", "Private repo shared using")}{" "}
+					<a href="/" target="_blank" rel="noopener noreferrer">
 						MST Unlisted Repo
 					</a>{" "}
-					hosted by{" "}
+					{t("· 운영:", "hosted by")}{" "}
 					<a
 						href="https://github.com/dhckdgjs"
 						target="_blank"
@@ -173,6 +201,7 @@ function ReleasesView({
 }: {
 	payload: Extract<ViewerPayload, { kind: "releases" }>;
 }) {
+	const { t } = useLocale();
 	const { owner, repo, shareId, refName } = payload;
 	return (
 		<ViewerShell fullName={payload.fullName} refName={refName}>
@@ -184,13 +213,13 @@ function ReleasesView({
 								className="viewer__tab"
 								href={buildHref(owner, repo, "tree", refName, "", shareId)}
 							>
-								Files
+								{t("파일", "Files")}
 							</Link>
 						</div>
 						<div className="viewer__crumbs">
 							<span>{repo}</span>
 							<span className="sep"> / </span>
-							releases
+							{t("릴리스", "releases")}
 						</div>
 					</div>
 					<ReleasesList releases={payload.releases} shareId={shareId} />
@@ -205,6 +234,7 @@ function FileOrDirView({
 }: {
 	payload: Extract<ViewerPayload, { kind: "view" }>;
 }) {
+	const { t } = useLocale();
 	const {
 		owner,
 		repo,
@@ -302,7 +332,7 @@ function FileOrDirView({
 												className="viewer__tab"
 												href={buildReleasesHref(owner, repo, shareId)}
 											>
-												Releases
+												{t("릴리스", "Releases")}
 											</Link>
 										)}
 										{payload.allowDownload && (
@@ -310,7 +340,7 @@ function FileOrDirView({
 												className="viewer__dl"
 												href={`/api/download?s=${encodeURIComponent(shareId)}&ref=${encodeURIComponent(ref)}`}
 											>
-												Download as ZIP
+												{t("ZIP 다운로드", "Download as ZIP")}
 											</a>
 										)}
 									</div>
@@ -344,7 +374,12 @@ function FileOrDirView({
 					</div>
 
 					{contents.kind === "notfound" && (
-						<div className="tree__empty">Path not found on {ref}.</div>
+						<div className="tree__empty">
+							{t(
+								`${ref} 브랜치에서 경로를 찾을 수 없습니다.`,
+								`Path not found on ${ref}.`,
+							)}
+						</div>
 					)}
 
 					{contents.kind === "dir" && (
@@ -373,13 +408,13 @@ function FileOrDirView({
 						<>
 							<div className="filebar">
 								<span>
-									{contents.name} · {contents.size} bytes
+									{contents.name} · {contents.size} {t("바이트", "bytes")}
 								</span>
 								{hasMdTabs && (
 									<div
 										className="filebar__tabs"
 										role="tablist"
-										aria-label="Markdown view"
+										aria-label={t("마크다운 보기", "Markdown view")}
 									>
 										<button
 											type="button"
@@ -388,7 +423,7 @@ function FileOrDirView({
 											aria-selected={mdTab === "preview"}
 											onClick={() => setMdTab("preview")}
 										>
-											Preview
+											{t("미리보기", "Preview")}
 										</button>
 										<button
 											type="button"
@@ -397,7 +432,7 @@ function FileOrDirView({
 											aria-selected={mdTab === "code"}
 											onClick={() => setMdTab("code")}
 										>
-											Code
+											{t("코드", "Code")}
 										</button>
 									</div>
 								)}
@@ -408,12 +443,17 @@ function FileOrDirView({
 										aria-pressed={wrap}
 										onClick={toggleWrap}
 									>
-										Soft wrap
+										{t("자동 줄바꿈", "Soft wrap")}
 									</button>
 								)}
 							</div>
 							{contents.isBinary ? (
-								<div className="tree__empty">Binary file not shown.</div>
+								<div className="tree__empty">
+									{t(
+										"바이너리 파일은 표시할 수 없습니다.",
+										"Binary file not shown.",
+									)}
+								</div>
 							) : showPreview && mdHtml ? (
 								<RepoHtml className="readme" html={mdHtml} shareId={shareId} />
 							) : codeHtml ? (
@@ -451,6 +491,8 @@ export function ViewerContent({
 	slug: string[];
 	shareId: string;
 }) {
+	useClientLocalePage("공유 저장소", "Shared repository");
+	const { t } = useLocale();
 	const router = useRouter();
 	const [state, setState] = React.useState<FetchState>({ status: "loading" });
 
@@ -508,7 +550,7 @@ export function ViewerContent({
 	if (state.status === "loading") {
 		return (
 			<div className="viewer-shell notice-screen">
-				<h1>Loading…</h1>
+				<h1>{t("불러오는 중…", "Loading…")}</h1>
 			</div>
 		);
 	}

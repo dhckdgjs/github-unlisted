@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import * as React from "react";
+import { useLocale } from "@/components/locale-provider";
 import { buildHref } from "@/lib/repo-path";
 
 interface Entry {
@@ -65,6 +66,7 @@ export function SidebarTree({
 	parentPath: string;
 	showParent: boolean;
 }) {
+	const { t } = useLocale();
 	const [q, setQ] = React.useState("");
 	const query = q.trim().toLowerCase();
 	const visible = query
@@ -92,7 +94,8 @@ export function SidebarTree({
 					</span>
 					<input
 						type="search"
-						placeholder="Find a file"
+						placeholder={t("파일 검색", "Find a file")}
+						aria-label={t("파일 검색", "Find a file")}
 						value={q}
 						onChange={(e) => setQ(e.target.value)}
 					/>
@@ -114,13 +117,15 @@ export function SidebarTree({
 							<span className="chev" aria-hidden="true">
 								..
 							</span>
-							parent directory
+							{t("상위 폴더", "parent directory")}
 						</Link>
 					</div>
 				)}
 				{visible.length === 0 && (
 					<div className="tree__empty">
-						{query ? "No matches." : "No files here."}
+						{query
+							? t("검색 결과가 없습니다.", "No matches.")
+							: t("파일이 없습니다.", "No files here.")}
 					</div>
 				)}
 				{visible.map((e) => (

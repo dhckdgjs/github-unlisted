@@ -11,6 +11,7 @@ const { getSession, listCollections, listSharesForInstallation, managerProps } =
 vi.mock("@/lib/session", () => ({ getSession }));
 vi.mock("@/lib/collection-store", () => ({ listCollections }));
 vi.mock("@/lib/share-store", () => ({ listSharesForInstallation }));
+vi.mock("@/lib/locale-server", () => ({ getLocale: async () => "ko" }));
 vi.mock("@/components/collection-manager", () => ({
 	CollectionManager: (props: unknown) => {
 		managerProps(props);

@@ -1,4 +1,8 @@
+"use client";
+
+import { useLocale } from "@/components/locale-provider";
 import type { Release } from "@/lib/github-repo";
+import { intlLocale, type Locale } from "@/lib/i18n";
 
 // Release notes are rendered by the caller, which knows whether markdown is available; the HTML arrives already sanitized.
 export interface RenderedRelease extends Release {
@@ -14,12 +18,17 @@ function size(bytes: number): string {
 	return `${(mb / 1024).toFixed(1)} GB`;
 }
 
-// Minute precision, UTC, matching the rest of the site. Fixed format rather than a locale one so the server and client agree.
-function published(iso: string | null): string {
+// UTC keeps the publication day consistent across server and browser timezones.
+function published(iso: string | null, locale: Locale): string {
 	if (!iso) return "";
 	const d = new Date(iso);
 	if (Number.isNaN(d.getTime())) return "";
-	return d.toISOString().slice(0, 10);
+	return new Intl.DateTimeFormat(intlLocale(locale), {
+		year: "numeric",
+		month: "short",
+		day: "numeric",
+		timeZone: "UTC",
+	}).format(d);
 }
 
 export function ReleasesList({
@@ -29,8 +38,16 @@ export function ReleasesList({
 	releases: RenderedRelease[];
 	shareId: string;
 }) {
+	const { locale, t } = useLocale();
 	if (releases.length === 0) {
-		return <div className="tree__empty">This repository has no releases.</div>;
+		return (
+			<div className="tree__empty">
+				{t(
+					"이 저장소에는 릴리스가 없습니다.",
+					"This repository has no releases.",
+				)}
+			</div>
+		);
 	}
 
 	const dl = (qs: string) =>
@@ -44,10 +61,18 @@ export function ReleasesList({
 						<h2 className="release__name">{r.name}</h2>
 						<span className="chip release__tag">{r.tag}</span>
 						{r.prerelease && (
-							<span className="chip chip--medium">pre-release</span>
+							<span className="chip chip--medium">
+								{t("사전 릴리스", "pre-release")}
+							</span>
 						)}
 						{r.publishedUtc && (
-							<span className="release__date">{published(r.publishedUtc)}</span>
+							<time
+								className="release__date"
+								dateTime={r.publishedUtc}
+								title={t("게시일 (UTC)", "Published (UTC)")}
+							>
+								{published(r.publishedUtc, locale)}
+							</time>
 						)}
 					</div>
 
@@ -58,7 +83,9 @@ export function ReleasesList({
 							dangerouslySetInnerHTML={{ __html: r.bodyHtml }}
 						/>
 					) : (
-						<p className="release__empty">No release notes.</p>
+						<p className="release__empty">
+							{t("릴리스 설명이 없습니다.", "No release notes.")}
+						</p>
 					)}
 
 					<div className="release__assets">
@@ -66,7 +93,9 @@ export function ReleasesList({
 							className="release__asset"
 							href={dl(`tag=${encodeURIComponent(r.tag)}`)}
 						>
-							<span className="release__asset-name">Source code (zip)</span>
+							<span className="release__asset-name">
+								{t("소스 코드 (zip)", "Source code (zip)")}
+							</span>
 						</a>
 						{r.assets.map((a) => (
 							<a

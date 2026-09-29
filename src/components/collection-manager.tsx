@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useClientLocalePage, useLocale } from "@/components/locale-provider";
 import type { CollectionRecord } from "@/lib/collection-store";
 
 interface AvailableShare {
@@ -18,6 +19,66 @@ const toDraft = (collection: CollectionRecord): Draft => ({
 	items: collection.items.map((item) => ({ ...item })),
 });
 
+function collectionMessage(
+	value: string,
+	t: (ko: string, en: string) => string,
+) {
+	const messages: [string, string][] = [
+		[
+			"저장하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+			"Could not save. Please try again shortly.",
+		],
+		[
+			"저장했습니다. 공유 주소는 계속 유지됩니다.",
+			"Saved. Your share URL stays the same.",
+		],
+		["카탈로그 공유를 다시 시작했습니다.", "Collection sharing has resumed."],
+		[
+			"카탈로그 공유를 중지했습니다. 개별 저장소의 공유 링크는 유지됩니다.",
+			"Collection sharing has stopped. Individual repository links remain active.",
+		],
+		["요청을 완료하지 못했습니다.", "Could not complete the request."],
+		["공유 링크를 복사했습니다.", "Share link copied."],
+		[
+			"링크를 복사하지 못했습니다. 아래 공유 주소를 직접 복사해 주세요.",
+			"Could not copy the link. Copy the share URL below manually.",
+		],
+		["로그인이 필요합니다.", "Not signed in"],
+		[
+			"요청 출처가 올바르지 않습니다. 페이지를 새로고침한 뒤 다시 시도해 주세요.",
+			"Invalid request origin",
+		],
+		[
+			"공유 목록 서비스를 일시적으로 사용할 수 없습니다.",
+			"Collection service is unavailable",
+		],
+		["목록을 찾을 수 없습니다.", "Not found"],
+		[
+			"공유 링크를 사용할 수 없거나 만료되었습니다.",
+			"A share is unavailable or expired",
+		],
+		[
+			"이 계정의 앱에 연결된 공유 링크가 아닙니다.",
+			"A share is not owned by your installations",
+		],
+		[
+			"현재 저장소 접근 권한을 확인할 수 없습니다.",
+			"Could not verify current repository access",
+		],
+		[
+			"공유 링크의 저장소 접근 권한이 없어졌습니다.",
+			"A share no longer has repository access",
+		],
+		["제목을 입력해 주세요.", "Title is required"],
+		[
+			"공유 목록에는 최대 50개까지 추가할 수 있습니다.",
+			"A collection supports at most 50 items",
+		],
+	];
+	const pair = messages.find(([ko, en]) => value === ko || value === en);
+	return pair ? t(...pair) : value;
+}
+
 export function CollectionManager({
 	initialCollections,
 	shares,
@@ -27,6 +88,8 @@ export function CollectionManager({
 	shares: AvailableShare[];
 	login: string;
 }) {
+	const { locale, t } = useLocale();
+	useClientLocalePage("공유 목록 관리", "Manage collections");
 	const [collections, setCollections] = useState(initialCollections);
 	const [selectedId, setSelectedId] = useState(initialCollections[0]?.id ?? "");
 	const [draft, setDraft] = useState<Draft>(() =>
@@ -66,7 +129,12 @@ export function CollectionManager({
 	function selectCollection(id: string) {
 		if (
 			dirty &&
-			!window.confirm("저장하지 않은 변경 사항을 버리고 이동할까요?")
+			!window.confirm(
+				t(
+					"저장하지 않은 변경 사항을 버리고 이동할까요?",
+					"Discard unsaved changes and continue?",
+				),
+			)
 		)
 			return;
 		const next = collections.find((collection) => collection.id === id);
@@ -156,36 +224,43 @@ export function CollectionManager({
 	}
 
 	return (
-		<main className="collection-shell collection-manager" lang="ko">
+		<main className="collection-shell collection-manager" lang={locale}>
 			<header className="collection-heading">
 				<div className="collection-topline">
 					<a className="collection-text-link" href="/app">
-						← 저장소 관리
+						{t("← 저장소 관리", "← Repositories")}
 					</a>
 					<span>{login}</span>
 				</div>
-				<p className="collection-eyebrow">UNLISTED COLLECTIONS</p>
-				<h1>공유 목록 관리</h1>
+				<p className="collection-eyebrow">
+					{t("링크 전용 공유 목록", "UNLISTED COLLECTIONS")}
+				</p>
+				<h1>{t("공유 목록 관리", "Manage collections")}</h1>
 				<p className="collection-description">
-					기존 공유 링크를 모아 하나의 주소로 전달하세요. 자료와 설명, 순서를
-					바꿔도 카탈로그 주소는 유지됩니다.
+					{t(
+						"기존 공유 링크를 모아 하나의 주소로 전달하세요. 자료와 설명, 순서를 바꿔도 카탈로그 주소는 유지됩니다.",
+						"Bring existing share links together in one place. Your collection URL stays the same when you change its items, descriptions, or order.",
+					)}
 				</p>
 			</header>
 
-			<section className="collection-panel" aria-label="목록 선택">
+			<section
+				className="collection-panel"
+				aria-label={t("목록 선택", "Select collection")}
+			>
 				<div className="collection-picker">
 					<label className="collection-field">
-						목록 선택
+						{t("목록 선택", "Select collection")}
 						<select
 							value={selectedId}
 							disabled={busy}
 							onChange={(event) => selectCollection(event.target.value)}
 						>
-							<option value="">새 카탈로그</option>
+							<option value="">{t("새 카탈로그", "New collection")}</option>
 							{collections.map((collection) => (
 								<option key={collection.id} value={collection.id}>
 									{collection.title}
-									{collection.enabled ? "" : " (공유 중지)"}
+									{collection.enabled ? "" : t(" (공유 중지)", " (disabled)")}
 								</option>
 							))}
 						</select>
@@ -196,16 +271,18 @@ export function CollectionManager({
 						disabled={busy || !selectedId}
 						onClick={() => selectCollection("")}
 					>
-						새로 만들기
+						{t("새로 만들기", "Create new")}
 					</button>
 				</div>
 				<p className="collection-hint">
-					로그인 계정에 연결된 기존 공유 링크만 추가할 수 있습니다. 새 저장소를
-					공유하려면 먼저{" "}
+					{t(
+						"로그인 계정에 연결된 기존 공유 링크만 추가할 수 있습니다. 새 저장소를 공유하려면 먼저 ",
+						"You can add existing shares linked to your account. To share another repository, first create a link in ",
+					)}
 					<a className="collection-text-link" href="/app">
-						저장소 관리
+						{t("저장소 관리", "Repositories")}
 					</a>
-					에서 공유 링크를 만드세요.
+					{t("에서 공유 링크를 만드세요.", ".")}
 				</p>
 			</section>
 
@@ -220,9 +297,11 @@ export function CollectionManager({
 						className="collection-panel"
 						aria-labelledby="collection-details-heading"
 					>
-						<h2 id="collection-details-heading">카탈로그 소개</h2>
+						<h2 id="collection-details-heading">
+							{t("카탈로그 소개", "Collection details")}
+						</h2>
 						<label className="collection-field">
-							제목
+							{t("제목", "Title")}
 							<input
 								required
 								maxLength={120}
@@ -233,11 +312,14 @@ export function CollectionManager({
 										title: event.target.value,
 									}))
 								}
-								placeholder="공유할 자료 모음의 제목"
+								placeholder={t(
+									"공유할 자료 모음의 제목",
+									"A title for your collection",
+								)}
 							/>
 						</label>
 						<label className="collection-field">
-							설명
+							{t("설명", "Description")}
 							<textarea
 								rows={3}
 								maxLength={1000}
@@ -248,7 +330,10 @@ export function CollectionManager({
 										description: event.target.value,
 									}))
 								}
-								placeholder="이 카탈로그에 담긴 자료를 소개해 주세요."
+								placeholder={t(
+									"이 카탈로그에 담긴 자료를 소개해 주세요.",
+									"Introduce the items in this collection.",
+								)}
 							/>
 						</label>
 					</section>
@@ -258,22 +343,28 @@ export function CollectionManager({
 						aria-labelledby="collection-items-heading"
 					>
 						<div className="collection-section-title">
-							<h2 id="collection-items-heading">공유 자료</h2>
+							<h2 id="collection-items-heading">
+								{t("공유 자료", "Shared items")}
+							</h2>
 							<span className="collection-hint">{draft.items.length} / 50</span>
 						</div>
 						<div className="collection-picker">
 							<label className="collection-field">
-								추가할 저장소
+								{t("추가할 저장소", "Repository to add")}
 								<select
 									value={addShareId}
 									disabled={available.length === 0 || draft.items.length >= 50}
 									onChange={(event) => setAddShareId(event.target.value)}
 								>
-									<option value="">기존 공유 링크 선택</option>
+									<option value="">
+										{t("기존 공유 링크 선택", "Select an existing share")}
+									</option>
 									{available.map((share) => (
 										<option key={share.id} value={share.id}>
 											{share.owner}/{share.repo}
-											{share.showReleases ? " · Releases 포함" : ""}
+											{share.showReleases
+												? t(" · Releases 포함", " · Releases included")
+												: ""}
 										</option>
 									))}
 								</select>
@@ -299,28 +390,37 @@ export function CollectionManager({
 									setAddShareId("");
 								}}
 							>
-								자료 추가
+								{t("자료 추가", "Add item")}
 							</button>
 						</div>
 						{shares.length === 0 && (
 							<p className="collection-hint">
-								추가할 수 있는 공유 링크가 없습니다. 저장소 관리에서 먼저 링크를
-								만들어 주세요.
+								{t(
+									"추가할 수 있는 공유 링크가 없습니다. 저장소 관리에서 먼저 링크를 만들어 주세요.",
+									"No shares are available. Create a share link in Repositories first.",
+								)}
 							</p>
 						)}
 						{draft.items.length === 0 && (
 							<p className="collection-empty">
-								아직 추가한 자료가 없습니다. 위에서 저장소를 선택해 주세요.
+								{t(
+									"아직 추가한 자료가 없습니다. 위에서 저장소를 선택해 주세요.",
+									"No items yet. Select a repository above.",
+								)}
 							</p>
 						)}
 						{unavailableCount > 0 && (
 							<p className="collection-warning">
-								현재 사용할 수 없는 공유 링크가 {unavailableCount}개 있습니다.
-								해당 자료를 제거하거나 저장소 관리에서 공유 상태를 확인한 뒤
-								다시 불러와 주세요.
+								{t(
+									`현재 사용할 수 없는 공유 링크가 ${unavailableCount}개 있습니다. 해당 자료를 제거하거나 저장소 관리에서 공유 상태를 확인한 뒤 다시 불러와 주세요.`,
+									`${unavailableCount} share link(s) are unavailable. Remove those items or check their sharing status in Repositories, then reload.`,
+								)}
 							</p>
 						)}
-						<ol className="collection-edit-items" aria-label="자료 편집">
+						<ol
+							className="collection-edit-items"
+							aria-label={t("자료 편집", "Edit items")}
+						>
 							{draft.items.map((item, index) => {
 								const share = shareById.get(item.shareId);
 								return (
@@ -332,13 +432,16 @@ export function CollectionManager({
 												</span>{" "}
 												{share
 													? `${share.owner}/${share.repo}`
-													: "사용할 수 없는 공유 링크"}
+													: t("사용할 수 없는 공유 링크", "Unavailable share")}
 											</p>
 											<div className="collection-item-actions">
 												<button
 													type="button"
 													className="collection-button collection-button--small"
-													aria-label={`${index + 1}번 자료 위로`}
+													aria-label={t(
+														`${index + 1}번 자료 위로`,
+														`Move item ${index + 1} up`,
+													)}
 													disabled={index === 0}
 													onClick={() => moveItem(index, -1)}
 												>
@@ -347,7 +450,10 @@ export function CollectionManager({
 												<button
 													type="button"
 													className="collection-button collection-button--small"
-													aria-label={`${index + 1}번 자료 아래로`}
+													aria-label={t(
+														`${index + 1}번 자료 아래로`,
+														`Move item ${index + 1} down`,
+													)}
 													disabled={index === draft.items.length - 1}
 													onClick={() => moveItem(index, 1)}
 												>
@@ -356,7 +462,10 @@ export function CollectionManager({
 												<button
 													type="button"
 													className="collection-button collection-button--small"
-													aria-label={`${index + 1}번 자료 제거`}
+													aria-label={t(
+														`${index + 1}번 자료 제거`,
+														`Remove item ${index + 1}`,
+													)}
 													onClick={() =>
 														setDraft((current) => ({
 															...current,
@@ -366,23 +475,23 @@ export function CollectionManager({
 														}))
 													}
 												>
-													제거
+													{t("제거", "Remove")}
 												</button>
 											</div>
 										</div>
 										<label className="collection-field">
-											표시 이름 {index + 1}
+											{t("표시 이름", "Display name")} {index + 1}
 											<input
 												maxLength={100}
 												value={item.label}
 												onChange={(event) =>
 													changeItem(index, { label: event.target.value })
 												}
-												placeholder={share?.repo || "자료 이름"}
+												placeholder={share?.repo || t("자료 이름", "Item name")}
 											/>
 										</label>
 										<label className="collection-field">
-											자료 설명 {index + 1}
+											{t("자료 설명", "Item description")} {index + 1}
 											<textarea
 												rows={2}
 												maxLength={300}
@@ -390,13 +499,18 @@ export function CollectionManager({
 												onChange={(event) =>
 													changeItem(index, { description: event.target.value })
 												}
-												placeholder="자료의 내용과 용도를 설명해 주세요."
+												placeholder={t(
+													"자료의 내용과 용도를 설명해 주세요.",
+													"Describe what this item is for.",
+												)}
 											/>
 										</label>
 										{share && (
 											<p className="collection-hint">
-												README 열기
-												{share.showReleases ? " · Releases 열기" : ""}
+												{t("README 열기", "Open README")}
+												{share.showReleases
+													? t(" · Releases 열기", " · Open Releases")
+													: ""}
 											</p>
 										)}
 									</li>
@@ -407,10 +521,16 @@ export function CollectionManager({
 					<div className="collection-save-bar">
 						<span className="collection-hint">
 							{dirty
-								? "저장하지 않은 변경 사항이 있습니다."
+								? t(
+										"저장하지 않은 변경 사항이 있습니다.",
+										"You have unsaved changes.",
+									)
 								: selected
-									? "저장된 내용입니다."
-									: "저장하면 공유 주소가 만들어집니다."}
+									? t("저장된 내용입니다.", "All changes saved.")
+									: t(
+											"저장하면 공유 주소가 만들어집니다.",
+											"Save to create a share URL.",
+										)}
 						</span>
 						<button
 							type="submit"
@@ -422,10 +542,10 @@ export function CollectionManager({
 							}
 						>
 							{busy
-								? "처리 중…"
+								? t("처리 중…", "Working…")
 								: selected
-									? "변경 사항 저장"
-									: "카탈로그 만들기"}
+									? t("변경 사항 저장", "Save changes")
+									: t("카탈로그 만들기", "Create collection")}
 						</button>
 					</div>
 				</fieldset>
@@ -436,12 +556,12 @@ export function CollectionManager({
 					className="collection-message collection-message--error"
 					role="alert"
 				>
-					{error}
+					{collectionMessage(error, t)}
 				</p>
 			)}
 			{notice && (
 				<p className="collection-message" role="status">
-					{notice}
+					{collectionMessage(notice, t)}
 				</p>
 			)}
 
@@ -451,11 +571,15 @@ export function CollectionManager({
 					aria-labelledby="collection-share-heading"
 				>
 					<div className="collection-section-title">
-						<h2 id="collection-share-heading">공유 링크</h2>
+						<h2 id="collection-share-heading">
+							{t("공유 링크", "Share link")}
+						</h2>
 						<span
 							className={`collection-status${selected.enabled ? "" : " collection-status--off"}`}
 						>
-							{selected.enabled ? "공유 중" : "공유 중지"}
+							{selected.enabled
+								? t("공유 중", "Sharing enabled")
+								: t("공유 중지", "Sharing disabled")}
 						</span>
 					</div>
 					<a
@@ -468,9 +592,10 @@ export function CollectionManager({
 						{collectionPath}
 					</a>
 					<p className="collection-privacy-note">
-						이 주소를 가진 누구나 카탈로그와 연결된 자료를 열람하고 링크를
-						재전달할 수 있습니다. 공유 중지는 카탈로그에만 적용되며, 이미 전달한
-						개별 저장소 링크는 저장소 관리에서 별도로 중지해야 합니다.
+						{t(
+							"이 주소를 가진 누구나 카탈로그와 연결된 자료를 열람하고 링크를 재전달할 수 있습니다. 공유 중지는 카탈로그에만 적용되며, 이미 전달한 개별 저장소 링크는 저장소 관리에서 별도로 중지해야 합니다.",
+							"Anyone with this URL can view the collection and linked items, and forward the link. Disabling this collection does not revoke individual repository links. Revoke those separately in Repositories.",
+						)}
 					</p>
 					<div className="collection-actions">
 						<button
@@ -479,7 +604,7 @@ export function CollectionManager({
 							disabled={busy}
 							onClick={() => void copyLink()}
 						>
-							링크 복사
+							{t("링크 복사", "Copy link")}
 						</button>
 						<a
 							className="collection-button"
@@ -488,7 +613,7 @@ export function CollectionManager({
 							referrerPolicy="no-referrer"
 							target="_blank"
 						>
-							카탈로그 열기 ↗
+							{t("카탈로그 열기 ↗", "Open collection ↗")}
 						</a>
 						<button
 							className="collection-button collection-button--toggle"
@@ -496,7 +621,9 @@ export function CollectionManager({
 							disabled={busy}
 							onClick={() => void persist(!selected.enabled)}
 						>
-							{selected.enabled ? "공유 중지" : "공유 다시 시작"}
+							{selected.enabled
+								? t("공유 중지", "Disable sharing")
+								: t("공유 다시 시작", "Resume sharing")}
 						</button>
 					</div>
 				</section>

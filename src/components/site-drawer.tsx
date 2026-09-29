@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { createPortal } from "react-dom";
+import { useLocale } from "@/components/locale-provider";
 import { NAV_ITEMS, type NavActive } from "@/lib/nav";
 import {
 	CURRENT_STATUS,
@@ -15,6 +16,15 @@ interface Props {
 }
 
 export function SiteDrawer({ signedIn, active = null }: Props) {
+	const { t } = useLocale();
+	const statusLabel = t(
+		CURRENT_STATUS.type === "okay"
+			? "상태: 정상"
+			: CURRENT_STATUS.type === "maintenance-medium"
+				? "상태: 주의"
+				: "상태: 심각",
+		statusDotAriaLabel(CURRENT_STATUS),
+	);
 	const [open, setOpen] = React.useState(false);
 	const [mounted, setMounted] = React.useState(false);
 
@@ -44,7 +54,7 @@ export function SiteDrawer({ signedIn, active = null }: Props) {
 				<button
 					type="button"
 					className="drawer-backdrop"
-					aria-label="Close menu"
+					aria-label={t("메뉴 닫기", "Close menu")}
 					onClick={() => setOpen(false)}
 				/>
 			)}
@@ -54,14 +64,14 @@ export function SiteDrawer({ signedIn, active = null }: Props) {
 				data-open={open || undefined}
 				role="dialog"
 				aria-modal="true"
-				aria-label="Site navigation"
+				aria-label={t("사이트 메뉴", "Site navigation")}
 				aria-hidden={!open}
 			>
 				<div className="drawer-panel__head">
 					<button
 						type="button"
 						className="drawer-panel__close"
-						aria-label="Close menu"
+						aria-label={t("메뉴 닫기", "Close menu")}
 						onClick={() => setOpen(false)}
 					>
 						<svg
@@ -78,7 +88,10 @@ export function SiteDrawer({ signedIn, active = null }: Props) {
 						</svg>
 					</button>
 				</div>
-				<nav className="drawer-panel__links" aria-label="Primary">
+				<nav
+					className="drawer-panel__links"
+					aria-label={t("주 메뉴", "Primary")}
+				>
 					{NAV_ITEMS.filter((item) => !item.signedInOnly || signedIn).map(
 						(item) => (
 							<a
@@ -87,14 +100,14 @@ export function SiteDrawer({ signedIn, active = null }: Props) {
 								className={active === item.key ? "is-active" : undefined}
 								aria-current={active === item.key ? "page" : undefined}
 							>
-								{item.label}
+								{t(item.labelKo, item.label)}
 								{item.dot && (
 									<>
 										{" "}
 										<span
 											className={`status-dot ${statusDotClass(CURRENT_STATUS)}`}
 											role="img"
-											aria-label={statusDotAriaLabel(CURRENT_STATUS)}
+											aria-label={statusLabel}
 										/>
 									</>
 								)}
@@ -104,10 +117,10 @@ export function SiteDrawer({ signedIn, active = null }: Props) {
 					{/* Same Contact modal as the desktop nav pill; a drawer row
 					    here keeps the two menus identical. */}
 					{signedIn ? (
-						<a href="/api/github/logout">Sign out</a>
+						<a href="/api/github/logout">{t("로그아웃", "Sign out")}</a>
 					) : (
 						<a href="/api/github/login" className="is-cta">
-							Sign in
+							{t("로그인", "Sign in")}
 						</a>
 					)}
 				</nav>
@@ -120,7 +133,9 @@ export function SiteDrawer({ signedIn, active = null }: Props) {
 			<button
 				type="button"
 				className="hamburger"
-				aria-label={open ? "Close menu" : "Open menu"}
+				aria-label={
+					open ? t("메뉴 닫기", "Close menu") : t("메뉴 열기", "Open menu")
+				}
 				aria-expanded={open}
 				aria-controls="site-drawer-panel"
 				onClick={() => setOpen((v) => !v)}

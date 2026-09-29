@@ -2,6 +2,8 @@ import "@/styles/global.css";
 import "@/styles/collections.css";
 import { CollectionManager } from "@/components/collection-manager";
 import { listCollections } from "@/lib/collection-store";
+import { translator } from "@/lib/i18n";
+import { getLocale } from "@/lib/locale-server";
 import { pageMetadata } from "@/lib/seo";
 import { getSession } from "@/lib/session";
 import { listSharesForInstallation } from "@/lib/share-store";
@@ -9,27 +11,39 @@ import { listSharesForInstallation } from "@/lib/share-store";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export const metadata = {
-	...pageMetadata({ title: "공유 목록 관리", index: false }),
-	referrer: "no-referrer" as const,
-};
+export async function generateMetadata() {
+	const t = translator(await getLocale());
+	return {
+		...pageMetadata({
+			title: t("공유 목록 관리", "Manage collections"),
+			index: false,
+		}),
+		referrer: "no-referrer" as const,
+	};
+}
 
 export default async function CollectionsPage() {
+	const locale = await getLocale();
+	const t = translator(locale);
 	const session = await getSession();
 	if (!session) {
 		return (
-			<main className="collection-shell collection-signin" lang="ko">
-				<p className="collection-eyebrow">UNLISTED COLLECTIONS</p>
-				<h1>공유 목록 관리</h1>
+			<main className="collection-shell collection-signin" lang={locale}>
+				<p className="collection-eyebrow">
+					{t("링크 전용 공유 목록", "UNLISTED COLLECTIONS")}
+				</p>
+				<h1>{t("공유 목록 관리", "Manage collections")}</h1>
 				<p>
-					GitHub에 로그인하면 기존 공유 링크를 하나의 카탈로그로 모을 수
-					있습니다.
+					{t(
+						"GitHub에 로그인하면 기존 공유 링크를 하나의 카탈로그로 모을 수 있습니다.",
+						"Sign in with GitHub to combine existing share links into one collection.",
+					)}
 				</p>
 				<a
 					className="collection-button collection-button--primary"
 					href="/api/github/login"
 				>
-					GitHub 로그인
+					{t("GitHub 로그인", "Sign in with GitHub")}
 				</a>
 			</main>
 		);
@@ -69,16 +83,21 @@ export default async function CollectionsPage() {
 		);
 	} catch {
 		return (
-			<main className="collection-shell collection-signin" lang="ko">
-				<h1>카탈로그를 불러오지 못했습니다</h1>
+			<main className="collection-shell collection-signin" lang={locale}>
+				<h1>
+					{t("카탈로그를 불러오지 못했습니다", "Could not load collections")}
+				</h1>
 				<p>
-					잠시 후 다시 시도해 주세요. 저장된 카탈로그는 변경되지 않았습니다.
+					{t(
+						"잠시 후 다시 시도해 주세요. 저장된 카탈로그는 변경되지 않았습니다.",
+						"Please try again shortly. Your saved collections have not changed.",
+					)}
 				</p>
 				<a className="collection-button" href="/app/collections">
-					다시 시도
+					{t("다시 시도", "Try again")}
 				</a>
 				<a className="collection-text-link" href="/app">
-					저장소 관리로 돌아가기
+					{t("저장소 관리로 돌아가기", "Back to Repositories")}
 				</a>
 			</main>
 		);

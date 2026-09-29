@@ -9,11 +9,12 @@ const { getPublicCollection, notFound } = vi.hoisted(() => ({
 }));
 vi.mock("@/lib/collection-service", () => ({ getPublicCollection }));
 vi.mock("next/navigation", () => ({ notFound }));
+vi.mock("@/lib/locale-server", () => ({ getLocale: vi.fn(async () => "ko") }));
 
 import PublicCollectionPage, {
 	dynamic,
 	fetchCache,
-	metadata,
+	generateMetadata,
 	revalidate,
 } from "./page";
 
@@ -95,7 +96,8 @@ describe("PublicCollectionPage", () => {
 		expect(screen.queryByRole("link")).not.toBeInTheDocument();
 	});
 
-	it("keeps bearer URLs and private content out of metadata and opts out of caches", () => {
+	it("keeps bearer URLs and private content out of metadata and opts out of caches", async () => {
+		const metadata = await generateMetadata();
 		expect(dynamic).toBe("force-dynamic");
 		expect(revalidate).toBe(0);
 		expect(fetchCache).toBe("force-no-store");

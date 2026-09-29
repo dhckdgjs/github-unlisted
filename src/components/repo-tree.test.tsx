@@ -8,6 +8,7 @@ vi.mock("next/link", () => ({
 		createElement("a", { href }, children),
 }));
 
+import { LocaleProvider } from "./locale-provider";
 import { RepoTree } from "./repo-tree";
 
 const items = [
@@ -18,20 +19,36 @@ const items = [
 	{ path: "src/util/b.ts", type: "file" as const },
 ];
 
-function renderTree(activePath: string) {
+function renderTree(activePath: string, locale: "ko" | "en" = "en") {
 	return render(
-		<RepoTree
-			items={items}
-			owner="o"
-			repo="r"
-			refName="main"
-			shareId="s1"
-			activePath={activePath}
-		/>,
+		<LocaleProvider initialLocale={locale}>
+			<RepoTree
+				items={items}
+				owner="o"
+				repo="r"
+				refName="main"
+				shareId="s1"
+				activePath={activePath}
+			/>
+		</LocaleProvider>,
 	);
 }
 
 describe("RepoTree", () => {
+	it("localizes search controls without translating filenames", () => {
+		renderTree("", "ko");
+		expect(
+			screen.getByRole("searchbox", { name: "파일 검색" }),
+		).toBeInTheDocument();
+		expect(screen.getByRole("link", { name: "README.md" })).toHaveAttribute(
+			"href",
+			"/o/r/blob/main/README.md?s=s1",
+		);
+		fireEvent.change(screen.getByPlaceholderText("파일 검색"), {
+			target: { value: "missing" },
+		});
+		expect(screen.getByText("검색 결과가 없습니다.")).toBeInTheDocument();
+	});
 	it("shows top-level entries and keeps folders collapsed by default", () => {
 		renderTree("");
 		expect(screen.getByText("README.md")).toBeInTheDocument();
