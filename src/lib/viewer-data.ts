@@ -13,6 +13,7 @@ import {
 import { highlight } from "@/lib/highlight";
 import { isMarkdown, renderMarkdown } from "@/lib/markdown";
 import { renderMarkdownGitHub } from "@/lib/markdown-github";
+import { rewriteRepoImageSources } from "@/lib/repo-asset";
 import {
 	buildHref,
 	parseView,
@@ -244,13 +245,23 @@ export async function resolveViewer(
 		// (preview is the default; both present = show the tabs).
 		codeHtml = await highlight(contents.text, contents.name);
 		if (isMarkdown(contents.name)) {
-			mdHtml =
+			const rendered =
 				(await renderMarkdownGitHub(
 					octokit,
 					target.owner,
 					target.repo,
 					contents.text,
 				)) ?? renderMarkdown(contents.text);
+			mdHtml = rewriteRepoImageSources(
+				rendered,
+				{
+					owner: target.owner,
+					repo: target.repo,
+					ref,
+					markdownPath: path,
+				},
+				shareId,
+			);
 		}
 	}
 

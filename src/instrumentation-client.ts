@@ -14,7 +14,7 @@ initBotId({
 			path: "/api/view",
 			method: "POST",
 			advancedOptions: {
-				checkLevel: "deepAnalysis",
+				checkLevel: "basic",
 			},
 		},
 	],

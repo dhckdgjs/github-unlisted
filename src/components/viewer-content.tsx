@@ -83,19 +83,19 @@ function ViewerShell({
 				<span className="viewer-attrib">
 					Private repo shared using{" "}
 					<a
-						href="https://github-unlisted.com"
+						href="/"
 						target="_blank"
 						rel="noopener noreferrer"
 					>
-						Github-Unlisted
+						MST Unlisted Repo
 					</a>{" "}
 					hosted by{" "}
 					<a
-						href="https://revoconner.com"
+						href="https://github.com/dhckdgjs"
 						target="_blank"
 						rel="noopener noreferrer"
 					>
-						Rév
+						dhckdgjs
 					</a>
 				</span>
 			</header>

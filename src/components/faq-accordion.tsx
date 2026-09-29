@@ -4,70 +4,24 @@ import * as React from "react";
 
 const ITEMS: { q: string; a: React.ReactNode }[] = [
 	{
-		q: "How is it free?",
-		a: "I already pay for Vercel for my own personal website. I also needed a solution to share private GitHub repositories online, hence this was created. The extra cost for this is $20 per month for enhanced firewall on viewer's page so your shared repositories never gets scraped by bots, and the domain cost per year. It's not a lot, so I don't see the loss in it.",
+		q: "Who operates this instance?",
+		a: "MST / dhckdgjs operates this self-hosted fork. It is independent of the upstream github-unlisted public service.",
 	},
 	{
-		q: "How do you plan to monetize it?",
-		a: "I don't. It's a solution I built for my own use. It's not a business.",
+		q: "What does a share link expose?",
+		a: "The repository file browser, not just the README. Release notes and downloads are available when enabled. Anyone with the link can access it while it remains valid.",
 	},
 	{
-		q: "Can you see the private repos I share?",
-		a: "Honest answer: technically I could. Like any GitHub App (the same as Vercel, CodeRabbit, and others), the server holds the app key and fetches your repo from GitHub to display it, so the content passes through the server in plain form. There is no end-to-end encryption that would make this impossible. What protects you: the app is read-only and limited to the repos you choose, you can revoke it instantly in GitHub (it stops working immediately), nothing from your repo is ever stored (it is streamed live per request), share links carry no credentials and can be set to expire, and the whole project is open source so the behaviour is auditable. I do not read your repositories, but you are trusting that, the same as installing any third-party GitHub App.",
+		q: "What permissions does the GitHub App need?",
+		a: "Read-only Contents and Metadata, limited to explicitly selected repositories. The server can read those repositories but cannot write to them.",
 	},
 	{
-		q: "How long does a shared link last for?",
-		a: "However long you wish to share it for. You can set an expiration duration, or set it to never expire.",
+		q: "How can access be stopped?",
+		a: "Revoke the share in the dashboard, set an expiry, or uninstall the GitHub App in GitHub settings. Copies already downloaded cannot be recalled.",
 	},
 	{
-		q: "Do you track me or use analytics?",
-		a: "I use Vercel Web Analytics to see aggregate page views and where traffic comes from — purely so I know whether anyone is actually using this. It is cookieless, does not assign you a persistent identifier, and does not follow you across other sites. There is no third-party advertising or cross-site tracking on the site.",
-	},
-	{
-		q: "How do I uninstall the app?",
-		a: (
-			<>
-				Uninstalling is done from GitHub, not from this site. Go to{" "}
-				<a
-					href="https://github.com/settings/installations"
-					target="_blank"
-					rel="noopener"
-				>
-					github.com/settings/installations
-				</a>{" "}
-				(or, for an organization, your org's Settings → Third-party Access →
-				GitHub Apps), find <em>Unlisted Repo</em>, click{" "}
-				<strong>Configure</strong>, scroll to the <em>Danger Zone</em>, and
-				choose <strong>Uninstall</strong>. The app loses access immediately, any
-				active share links stop working, and the associated share records are
-				purged. If you also want to remove the OAuth authorization, revoke it
-				under{" "}
-				<a
-					href="https://github.com/settings/apps/authorizations"
-					target="_blank"
-					rel="noopener"
-				>
-					Authorized GitHub Apps
-				</a>
-				.
-			</>
-		),
-	},
-	{
-		q: "What other projects have you made?",
-		a: (
-			<>
-				Most of my work relates to computer graphics, which you can read about
-				on{" "}
-				<a href="https://www.revoconner.com" target="_blank" rel="noopener">
-					www.revoconner.com
-				</a>
-				. <br />I also host another website for a photo recognition offline app{" "}
-				<a href="https://felicity-app.com" target="_blank" rel="noopener">
-					felicity-app.com
-				</a>
-			</>
-		),
+		q: "Is this an encrypted document vault?",
+		a: "No. Repository content passes through GitHub and the hosting service. Keep link URLs private and share only material intended for recipients.",
 	},
 ];
 

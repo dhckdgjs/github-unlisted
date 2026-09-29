@@ -6,12 +6,12 @@ import { resolveViewer, type ViewerPayload } from "@/lib/viewer-data";
 // away here. It exposes private-repo contents, so it must never be cached.
 export const dynamic = "force-dynamic";
 
-// Deep Analysis (Kasada) on top of the basic challenge check. checkLevel MUST
-// match the client registration in src/instrumentation-client.ts, or every
-// verification fails.
+// Basic BotID is available on every Vercel plan. checkLevel MUST match the
+// client registration in src/instrumentation-client.ts, or every verification
+// fails.
 export async function POST(request: Request): Promise<NextResponse> {
 	const verification = await checkBotId({
-		advancedOptions: { checkLevel: "deepAnalysis" },
+		advancedOptions: { checkLevel: "basic" },
 	});
 
 	if (verification.isBot) {

@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 import { ACCENT } from "@/lib/brand";
+import { SITE } from "@/lib/seo";
 
 // Shared 1200×630 share card. Satori constraints: flexbox only, no CSS vars
 // (the accent comes from the ACCENT constant; the neutral bg/text are
@@ -111,7 +112,7 @@ export function ogImage(title: string, subtitle: string) {
 					color: "#777b86",
 				}}
 			>
-				<span>www.github-unlisted.com</span>
+				<span>{new URL(SITE.url).host}</span>
 				<span>Free · open source</span>
 			</div>
 		</div>,

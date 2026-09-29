@@ -5,11 +5,11 @@ export function SiteFooter() {
 	return (
 		<footer className="site-footer">
 			<a
-				href="https://github.com/revoconner/github-unlisted"
+				href="https://github.com/dhckdgjs/github-unlisted"
 				target="_blank"
 				rel="noopener"
 			>
-				View <span className="url">Source Code</span>
+				MST self-hosted fork · <span className="url">Source Code</span>
 				<svg
 					width="11"
 					height="11"
@@ -26,7 +26,7 @@ export function SiteFooter() {
 				</svg>
 			</a>
 			<a href="https://www.revoconner.com" target="_blank" rel="noopener">
-				The service is provided by R&eacute;v <span className="url">www.revoconner.com</span>
+				Based on github-unlisted by R&eacute;v
 				<svg
 					width="11"
 					height="11"

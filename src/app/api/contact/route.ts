@@ -77,9 +77,9 @@ export async function POST(req: Request) {
 	const apiKey = process.env.RESEND_API_KEY;
 	if (!apiKey) return bad("Email is not configured.", 500);
 
-	const to = process.env.CONTACT_TO_EMAIL ?? "github-unlisted@revoconner.com";
-	const from =
-		process.env.CONTACT_FROM_EMAIL ?? "Unlisted Repo <contact@revoconner.com>";
+	const to = process.env.CONTACT_TO_EMAIL;
+	const from = process.env.CONTACT_FROM_EMAIL;
+	if (!to || !from) return bad("Email is not configured.", 500);
 
 	const resend = new Resend(apiKey);
 	const { error } = await resend.emails.send({

@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 // manifest and JSON-LD all derive from this.
 
 export const SITE = {
-	url: "https://www.github-unlisted.com",
+	url: process.env.SITE_URL ?? "http://localhost:3000",
 	name: "Unlisted Repo",
 	// The root layout adds this suffix; pages pass the BARE title.
 	titleTemplate: "%s — Unlisted Repo",
@@ -13,8 +13,8 @@ export const SITE = {
 	description:
 		"Share a private GitHub repository as a read-only browsable link. No collaborator invites, no GitHub account needed for the recipient — you keep full control through GitHub.",
 	locale: "en_US",
-	author: { name: "Rév", url: "https://www.revoconner.com" },
-	repo: "https://github.com/revoconner/github-unlisted",
+	author: { name: "MST / dhckdgjs", url: "https://github.com/dhckdgjs" },
+	repo: "https://github.com/dhckdgjs/github-unlisted",
 } as const;
 
 export function absoluteUrl(path = "/"): string {
